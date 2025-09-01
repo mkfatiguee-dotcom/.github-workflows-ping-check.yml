@@ -1,0 +1,41 @@
+name: Ping Checker
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ping-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install ping tool
+        run: sudo apt-get install -y iputils-ping
+
+      - name: Run ping test
+        run: |
+          SERVERS=(
+            "1.1.1.1"
+            "8.8.8.8"
+            "9.9.9.9"
+            "github.com"
+          )
+
+          BEST_SERVER=""
+          BEST_PING=9999
+
+          for host in "${SERVERS[@]}"; do
+            echo "Pinging $host ..."
+            PING=$(ping -c 4 $host | tail -1| awk '{print $4}' | cut -d '/' -f 2)
+            echo "$host average ping: $PING ms"
+
+            if (( $(echo "$PING < $BEST_PING" | bc -l) )); then
+              BEST_PING=$PING
+              BEST_SERVER=$host
+            fi
+          done
+
+          echo "----------------------------------"
+          echo "✅ أسرع سيرفر: $BEST_SERVER بـ Ping متوسط = $BEST_PING ms"
